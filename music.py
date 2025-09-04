@@ -1,7 +1,10 @@
+import re
+import aiohttp
+import asyncio
 import discord
+import functools
 from discord.ext import commands
 from yt_dlp import YoutubeDL
-import asyncio
 from ffmpeg_mode import FFMPEG_PATH
 
 # 狀態變數與清單, 用於多伺服器音樂播放清單
@@ -22,6 +25,11 @@ def setup_music_commands(bot):
         with YoutubeDL(ydl_opts) as ydl:                        # 使用 yt-dlp 取得音訊串流連結
             info = ydl.extract_info(youtube_url, download=False)
             return info['url']
+        
+    # 使用 asyncio 封裝 get_audio_url 以便在非同步環境中使用
+    async def get_audio_url_async(youtube_url):
+        loop = asyncio.get_event_loop()     # 取得當前事件循環
+        return await loop.run_in_executor(None, functools.partial(get_audio_url, youtube_url))      # 執行 get_audio_url 並等待結果
 
     # 播放器核心函式
     async def start_playing(ctx):
@@ -30,16 +38,16 @@ def setup_music_commands(bot):
         index = now_playing_index.get(guild_id, 0)  # 取得當前播放索引
 
         if index >= len(queue):                     # 如果索引超出清單長度，則停止播放
-            if looping and len(queue) > 0:
-                now_playing_index[guild_id] = 0
-                index = 0
+            if looping and len(queue) > 0:          # 如果循環播放模式開啟，則重置索引
+                now_playing_index[guild_id] = 0     # 重置當前播放索引
+                index = 0                           # 重新開始播放清單
             else:
                 is_playing[guild_id] = False
                 return
 
         url = queue[index]                          # 取得當前播放的 URL
         try:
-            stream_url = get_audio_url(url)         # 取得音訊串流連結
+            stream_url = await get_audio_url_async(url) # 取得音訊串流連結
         except Exception as e:
             await ctx.send(f"❌ 取得音訊失敗：{e}")
             return
@@ -64,14 +72,29 @@ def setup_music_commands(bot):
             await ctx.send("音樂衝突啦,拜託回報一下怎麼做到的,因為作者找不到原因。")
             return
         await asyncio.sleep(2.0)  # 等待一小段時間確認是否成功播放
+        
+        # 確認是否成功播放音樂
         if not vc.is_playing():
             await ctx.send("⚠️ 播放失敗，自動跳過下一首！")
             now_playing_index[guild_id] += 1
             await start_playing(ctx)
             return
         else:
-            is_playing[guild_id] = True                                 # 設定當前播放狀態為 True
-            await ctx.send(f"🎵 當前撥放歌曲：[[連結]]({url})")
+            async def quick_youtube_title(url):
+                try:
+                    async with aiohttp.ClientSession() as session:  # 使用 aiohttp 取得網頁內容
+                        async with session.get(url) as resp:        # 獲取 YouTube 影片的 HTML
+                            html = await resp.text()                # 讀取 HTML 內容
+                            title = re.search(r'<title>(.*?)</title>', html)    # 使用正則表達式抓取標題
+                            if title:
+                                return title.group(1).replace(" - YouTube", "").strip() # 返回標題內容
+                            else:
+                                return "❌ 標題抓不到"
+                except Exception as e:
+                    return f"⚠️ 發生錯誤：{e}"
+                
+            title = await quick_youtube_title(url)                      # 獲取 YouTube 影片標題
+            await ctx.send(f"🎵 目前正在播放：[\"{title}\"](<{url}>)")
 
     # 指令：!play <YouTube連結>
     @bot.command()
@@ -81,7 +104,7 @@ def setup_music_commands(bot):
         # 初始化清單與狀態
         playlist_queues.setdefault(guild_id, [])    # 音樂播放清單
         now_playing_index.setdefault(guild_id, 0)   # 當前播放索引
-        is_playing.setdefault(guild_id, False)      # 是否正在播放音樂
+        is_playing.setdefault(guild_id, False)      # 是否正在播放音樂s
 
         if not ctx.author.voice:
             await ctx.send("你不在語音頻道裡喔！")
@@ -95,6 +118,7 @@ def setup_music_commands(bot):
         await ctx.send("✅ 音樂加入播放清單！")
 
         if not is_playing[guild_id]:            # 如果目前沒有播放音樂，則開始播放
+            is_playing[guild_id] = True         # 加這行比較保險
             await start_playing(ctx)
 
     # 指令：!loop on/off    (循環功能)
