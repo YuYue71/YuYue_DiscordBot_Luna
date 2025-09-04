@@ -1,4 +1,8 @@
 import discord
+import pytz
+
+from discord import Embed, Color
+from datetime import datetime
 from discord.ext import commands
 
 # 儲存每個伺服器的紀錄頻道設定
@@ -28,20 +32,46 @@ def record_setup_commands(bot):
         else:
             await ctx.send("請使用 `Y!record on [#頻道]` 或 `Y!record off`") 
 
-
-
 @commands.Cog.listener()
 async def on_voice_state_update(member, before, after):
+    tz = pytz.timezone('Asia/Taipei')  # 設定時區為台北時間
+    now = datetime.now(tz)  # 取得當前時間
     guild_id = member.guild.id      # 取得伺服器 ID
+
     if guild_id not in voice_log_channels:  # 檢查是否有啟用語音紀錄
-        return  # 沒有啟用紀錄
+        return
+    
     channel_id = voice_log_channels[guild_id]   # 取得紀錄頻道 ID
     log_channel = member.guild.get_channel(channel_id)  # 獲取紀錄頻道對象
+
     if log_channel is None:     # 如果紀錄頻道不存在，則不處理
         return
-    if before.channel is None and after.channel is not None:        # 成員加入語音頻道
-        await log_channel.send(f"`{member.display_name}` 加入了語音頻道 `{after.channel.name}`")
-    elif before.channel is not None and after.channel is None:      # 成員離開語音頻道
-        await log_channel.send(f"`{member.display_name}` 離開了語音頻道 `{before.channel.name}`")
-    elif before.channel != after.channel:                           # 成員移動語音頻道
-        await log_channel.send(f"`{member.display_name}` 從 `{before.channel.name}` 移動到 `{after.channel.name}`")
+    
+    now_time = now.strftime("%Y-%m-%d %H:%M:%S")
+
+    if before.channel is None and after.channel is not None:
+        # 加入語音頻道
+        embed = Embed(
+            title=f"--**{member.display_name}**-- 加入了: **{after.channel.name}**",
+            color=Color.green()     # 綠色
+        )
+        embed.set_footer(text=f"[首都時間]：{now_time}")
+
+    elif before.channel is not None and after.channel is None:
+        # 離開語音頻道
+        embed = Embed(
+            title=f"--**{member.display_name}**-- 離開了: **{before.channel.name}**",
+            color=Color.red()       # 紅色
+        )
+        embed.set_footer(text=f"[首都時間]：{now_time}")
+
+    elif before.channel != after.channel:
+        # 移動語音頻道
+        embed = Embed(
+            title=f"--**{member.display_name}**-- 從: **{before.channel.name}** -> **{after.channel.name}**",
+            color=Color.yellow()    # 黃色
+        )
+        embed.set_footer(text=f"[首都時間]：{now_time}")
+    
+    # 發送訊息
+    await log_channel.send(embed = embed)
