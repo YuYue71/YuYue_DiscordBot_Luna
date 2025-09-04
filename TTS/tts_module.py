@@ -1,9 +1,10 @@
 import asyncio
 import discord
 import os
+import edge_tts
+import uuid
 
 from discord.ext import commands
-from gtts import gTTS
 from langdetect import detect
 from ffmpeg_mode import FFMPEG_PATH
 
@@ -32,7 +33,7 @@ def setup_tts_commands(bot):
             elif lang == "en":          # 英文或其他語言
                 return "en"
             else:
-                return "zh-tw"     # 預設英文
+                return "zh-tw"     # 預設中文
         except:
             return "zh-tw"  # 若無法偵測，回傳英文
         
@@ -122,30 +123,35 @@ def setup_tts_commands(bot):
         queue = voice_queues[guild.id]
         vc = guild.voice_client
 
-        # 如果佇列為空或未連線，則不處理
         if not vc or queue.empty():
             return
 
-        text, lang_code = await queue.get()     # 從佇列中取出下一段要播的文字和語言
+        text, lang_code = await queue.get()
 
-        # 儲存語音檔案路徑（單一檔案）
-        path = os.path.abspath(os.path.join("TTS", "voice.mp3"))
+        # 建立語音檔路徑（唯一名稱避免衝突）
+        filename = f"TTS/{uuid.uuid4()}.mp3"
 
-        # 建立語音檔案
+        # 使用少女音語音包（依語言切換）
+        voice_map = {
+            "zh-tw": "zh-TW-HsiaoChenNeural",
+            "zh-cn": "zh-CN-XiaoChenNeural",
+            "ja": "ja-JP-NanamiNeural",
+            "en": "en-US-AriaNeural"
+        }
+        voice = voice_map.get(lang_code, "zh-TW-HsiaoChenNeural")
+
         try:
-            tts = gTTS(text=text, lang=lang_code, slow=False)
-            tts.save(path)
-            print(f"✅ 語音檔已儲存：{path}")
+            communicate = edge_tts.Communicate(text=text, voice=voice)
+            await communicate.save(filename)
+            print(f"✅ edge-tts 語音已儲存：{filename}")
         except Exception as e:
             print(f"🔴 語音合成失敗：{e}")
             return
 
-        # 播放語音檔
         try:
-            # atempo 只支援 0.5～2.0
             audio = discord.FFmpegPCMAudio(
-                path,
-                executable=FFMPEG_PATH,
+                filename,
+                executable=FFMPEG_PATH
             )
 
             loop = asyncio.get_running_loop()
@@ -154,10 +160,13 @@ def setup_tts_commands(bot):
                 try:
                     fut = asyncio.run_coroutine_threadsafe(play_next(guild), loop)
                     fut.result()
+                    if os.path.exists(filename):
+                        os.remove(filename)
                 except Exception as e:
-                    print(f"after 播放下一段失敗：{e}")
+                    print(f"🔁 after 播放失敗：{e}")
 
-            print(f"▶️ 正在播放語音：{text[:10]}，語言：{lang_code}")
             vc.play(discord.PCMVolumeTransformer(audio, volume=0.5), after=after_play)
+            print(f"▶️ 撥放語音：「{text[:10]}...」，語音包：{voice}")
+
         except Exception as e:
             print(f"🔴 播放失敗：{e}")
