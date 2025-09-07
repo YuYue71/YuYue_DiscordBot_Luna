@@ -4,18 +4,27 @@
 
 ## 📁 專案結構
 ```
+├── config.json # 設置 token 資料
 ├── main.py # 主程式入口
 ├── music.py # 音樂播放模組
 ├── record.py # 語音頻道進出紀錄模組
 ├── ffmpeg_mode.py # FFMPEG 路徑管理
+├── backend_mas/
+│ ├── massage.py # 偽裝發話模組
+│ └── mas.json # 偽裝發話指定發話頻道跟內容資料
 ├── foundation/
 │ ├── Help.py # 指令總覽模組
 │ ├── help.json # 指令說明資料
+│ └── setup.py # 基礎指模組join,stop..
 ├── mockery/
 │ ├── Mockery.py # 嘲諷模組
-│ ├── Mockery.json # 嘲諷字串資料
+│ └── Mockery.json # 嘲諷字串資料
 ├── TTS/
 │ ├── tts_module.py # 文字轉語音 (TTS)
 │ └── voice.mp3 # 預設語音檔
-└── README.md
+├── PlayAI/
+│ ├── AI.py # AI 模型文字發話模組
+│ └── AI_profile.json # 長期記憶庫資料儲存位置頻道ID
+├── README.md # 基本介紹文件
+└── requirements.txt # 外部依賴一覽
 ```
