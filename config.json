@@ -1,5 +1,4 @@
 {
-    "DC_token": "",
-    "GPT_token": "",
-    "GEMINI_API_KEY": ""
+    "DC_token": "DC_token",
+    "GEMINI_API_KEY": "GEMINI_API_KEY"
 }

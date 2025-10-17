@@ -11,6 +11,7 @@ def setup_help_commands(bot):
         help_message = "可用指令：\n" + "\n".join(help_lines)    # 將每一行指令加入到訊息中
 
         await ctx.send(help_message)
+        # await ctx.send(f"[<奇怪的Minecraft養老服>](<https://discord.gg/rja3GCSE8d>)歡迎加入")
 
 
 # 如果要新增內容直接在 .json 檔案中新增即可, 這裡不需要修改Code

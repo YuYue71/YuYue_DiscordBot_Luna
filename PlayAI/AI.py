@@ -38,7 +38,7 @@ def gemini_api_call(payload, system_prompt):
     # 實現指數退避重試機制
     for attempt in range(max_retries):
         try:
-            response = requests.post(url, headers=headers, json=payload, timeout=40) # 增加 timeout
+            response = requests.post(url, headers=headers, json=payload, timeout=100) # 增加 timeout
 
             # 如果遇到 503 錯誤，就觸發重試
             if response.status_code == 503:
@@ -68,7 +68,7 @@ def gemini_api_call(payload, system_prompt):
             return "對捕幾,Luna沒有辦法回答.."
         
         except requests.exceptions.Timeout:
-            print(f"錯誤：API 請求超時 (timeout=20s)。")
+            print(f"錯誤：API 請求超時 (timeout=100s)。")
             return "對不起，Luna 腦袋有點熱熱的，思考超時了..." # 使用者指定的錯誤訊息
         
         except requests.exceptions.ConnectionError:
@@ -108,7 +108,7 @@ def setup_gemini_commands(bot):
         
     bot.long_term_memory = [] # 建立一個掛在 bot 物件下的變數來儲存記憶
     user_cooldowns = {} # 用於追蹤使用者的冷卻時間
-    COOLDOWN_SECONDS = 25   # 每個使用者的冷卻時間（秒）
+    COOLDOWN_SECONDS = 15   # 每個使用者的冷卻時間（秒）
     
     @bot.event
     async def on_message(message):

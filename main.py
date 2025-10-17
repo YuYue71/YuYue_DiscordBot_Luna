@@ -7,9 +7,7 @@ from foundation.setup import setup_join_stop_commands
 from music import setup_music_commands
 from TTS.tts_module import setup_tts_commands
 from foundation.Help import setup_help_commands
-from mockery.Mockery import setup_mockery_commands
 from record import record_setup_commands, on_voice_state_update
-from backend_mas.massage import setup_massage_commands
 
 # Intents 設定
 intents = discord.Intents.default()
@@ -32,10 +30,8 @@ setup_join_stop_commands(bot)               # 加入/離開語音頻道指令
 setup_music_commands(bot)                   # 音樂播放指令
 setup_tts_commands(bot)                     # TTS 語音指令
 setup_help_commands(bot)                    # 幫助指令
-setup_mockery_commands(bot)                 # 嘲諷指令
 record_setup_commands(bot)                  # 語音紀錄指令
-bot.add_listener(on_voice_state_update)     # 語音狀態更新事件             
-setup_massage_commands(bot)                 # 從 mas.json 發送訊息
+bot.add_listener(on_voice_state_update)     # 語音狀態更新事件
 setup_gemini_commands(bot)                  # AI !!
 
 # 當 Bot 啟動完成後顯示訊息

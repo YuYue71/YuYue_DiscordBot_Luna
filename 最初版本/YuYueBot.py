@@ -358,4 +358,4 @@ async def MockeryList(ctx):
     await ctx.send(mockery_list)
 
 # 啟動機器人，提示輸入 TOKEN（避免寫死在程式中）
-bot.run("")
+bot.run("MTE5ODg2ODI3NTE2NjE5NTcyMg.GyoFgO.J9cdXRrNGJQuWsu0qh3nMVr8VFAsQhjYwMuIAo")

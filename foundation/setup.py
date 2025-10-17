@@ -25,6 +25,7 @@ def setup_join_stop_commands(bot):
     # 指令：!stop，讓機器人離開語音頻道
     @bot.command()
     async def stop(ctx):
+        global looping
         guild_id = ctx.guild.id     # 取得伺服器 ID
         if ctx.voice_client:        # 檢查是否有語音連線
             await ctx.voice_client.disconnect() # 斷開語音連線
@@ -37,6 +38,6 @@ def setup_join_stop_commands(bot):
         now_playing_index.pop(guild_id, None)   # 移除當前播放索引
         is_playing.pop(guild_id, None)      # 移除播放狀態
         voice_log_channels.pop(guild_id, None)  # 移除語音紀錄頻道設定
-        looping.pop(guild_id, None)         # 移除循環播放設定
+        looping = False                     # 移除循環播放設定
 
         await ctx.send("已終止一切狀態")
