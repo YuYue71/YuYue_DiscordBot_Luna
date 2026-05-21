@@ -1,6 +1,5 @@
 # YuYue_DiscordBot_Luna
-- 一些由 **幽月 YuYue** 所開發的 DiscordBot 功能開源分享
-- 此開源包含一些 DiscordBot 的功能(包含由 **幽月 YuYue** 所開發的LunaBot主程式main.py),希望能夠對各位有幫助
+- Luna, 版本不相容, 故障版, 能用但不多, 以停止維護
 
 ## 📁 專案結構
 ```
